@@ -36,7 +36,6 @@ solución.
 agrupando por cliente, comercio, monto e intervalos entre fechas. 
 - Asimismo se pueden usar patrones de frecuencia, como FP-Growth. 
 - Para lograr una predicción de recurrencia es posible predecir si los gastos volverán a ocurrir y cuándo. Se puede usar:
-
 - Modelos de series temporales individuales por cliente y comercio: Prophet el cual es de fácil uso, robusto. ARIMA si se tienen suficientes datos por serie, LSTM (Long Short-Term Memory) si se desea una solución con aprendizaje profundo. 
 - Modelos de clasificación + regresión: Un clasificador para determinar si es probable que el gasto ocurra, tal como Random Forest, XGBoost, Logistic Regression y/o regressor para predecir monto tal como XGBoost Regressor, LightGBM, Linear Regression
 
