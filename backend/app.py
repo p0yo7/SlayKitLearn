@@ -78,3 +78,50 @@ def wrapped(
         "total_gastado": total_gastado,
         "resumen_gastos": resumen
     }
+
+# === Endpoint 3: Info del Cliente ===
+@app.get("/cliente_info")
+def cliente_info(cliente_id: str):
+    cliente = clientes_df[clientes_df["id_cliente"] == cliente_id]
+
+    if cliente.empty:
+        return {"mensaje": "Cliente no encontrado"}
+
+    cliente = cliente.iloc[0]
+    info = {
+        "id_cliente": str(cliente["id_cliente"]),
+        "fecha_nacimiento": cliente["fecha_nacimiento"].date(),
+        "fecha_alta": cliente["fecha_alta"].date(),
+        "id_municipio": int(cliente["id_municipio"]),
+        "id_estado": int(cliente["id_estado"]),
+        "tipo_persona": str(cliente["tipo_persona"]),
+        "genero": str(cliente["genero"]),
+        "actividad_empresarial": str(cliente["actividad_empresarial"])
+    }
+
+    return info
+
+# === Endpoint 4: Resumen de transacciones ===
+@app.get("/resumen_transacciones")
+def resumen_transacciones(cliente_id: str, desde: str, hasta: str):
+    desde = pd.to_datetime(desde)
+    hasta = pd.to_datetime(hasta)
+
+    transacciones_cliente = transacciones_df[
+        (transacciones_df["id_cliente"] == cliente_id) &
+        (transacciones_df["fecha"].between(desde, hasta))
+    ]
+
+    if transacciones_cliente.empty:
+        return {"mensaje": "No hay transacciones en el periodo indicado"}
+
+    resumen = { 
+        "total_transacciones": len(transacciones_cliente),
+        "total_gastado": round(transacciones_cliente["monto"].sum(), 2),
+        "promedio_gasto": round(transacciones_cliente["monto"].mean(), 2),
+        "max_gasto": round(transacciones_cliente["monto"].max(), 2),
+        "min_gasto": round(transacciones_cliente["monto"].min(), 2),
+        "moneda": "MXN",
+        "rango": f"{desde.date()} a {hasta.date()}"
+    }
+    return resumen
