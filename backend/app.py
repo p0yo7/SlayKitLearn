@@ -26,8 +26,9 @@ app.add_middleware(
 
 
 # === Cargar datos ===
-clientes_df = pd.read_csv("../datos/base_clientes_final.csv", parse_dates=["fecha_nacimiento", "fecha_alta"])
-transacciones_df = pd.read_csv("../datos/base_transacciones_final.csv", parse_dates=["fecha"])
+# Si es en docker cambiar ../datos/base a datos/base...
+clientes_df = pd.read_csv("datos/base_clientes_final.csv", parse_dates=["fecha_nacimiento", "fecha_alta"])
+transacciones_df = pd.read_csv("datos/base_transacciones_final.csv", parse_dates=["fecha"])
 
 # Renombrar id para evitar confusión
 clientes_df.rename(columns={"id": "id_cliente"}, inplace=True)
