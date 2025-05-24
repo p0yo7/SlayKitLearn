@@ -13,6 +13,17 @@ except FileNotFoundError:
 
 app = FastAPI(title="API de Gastos Recurrentes y Resumen")
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # o ["*"] en desarrollo
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 # === Cargar datos ===
 clientes_df = pd.read_csv("../datos/base_clientes_final.csv", parse_dates=["fecha_nacimiento", "fecha_alta"])
 transacciones_df = pd.read_csv("../datos/base_transacciones_final.csv", parse_dates=["fecha"])
@@ -101,9 +112,15 @@ def wrapped(
     if cliente_tx.empty:
         return {"mensaje": "No hay transacciones en el periodo indicado"}
 
-    resumen_raw = cliente_tx.groupby(modo)["monto"].sum()
-    resumen = resumen_raw.round(2).sort_values(ascending=False).to_dict()
+    resumen_raw = (
+        cliente_tx
+        .groupby(modo)["monto"]
+        .sum()
+        .round(2)
+        .sort_values(ascending=False)
+    )
 
+    top_5_resumen = resumen_raw.head(5).to_dict()
     total_gastado = round(cliente_tx["monto"].sum(), 2)
 
     return {
@@ -111,7 +128,7 @@ def wrapped(
         "rango": f"{desde.date()} a {hasta.date()}",
         "moneda": "MXN",
         "total_gastado": total_gastado,
-        "resumen_gastos": resumen
+        "resumen_gastos": top_5_resumen
     }
 
 # === Endpoint 3: Info del Cliente ===
