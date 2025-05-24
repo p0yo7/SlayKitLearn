@@ -1,8 +1,7 @@
-version: "3.9"
-
 services:
   api:
-    build: ./backend
+    build:
+      context: ./backend
     ports:
       - "8000:8000"
     volumes:
@@ -10,11 +9,12 @@ services:
     restart: unless-stopped
 
   web:
-    build: ./webapp
+    build:
+      context: ./webapp/heybanco  
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-    restart: unless-stopped
     depends_on:
       - api
+    restart: unless-stopped
