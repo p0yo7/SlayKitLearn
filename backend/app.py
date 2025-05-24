@@ -4,6 +4,12 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+import joblib
+
+try:
+    modelo = joblib.load("../modelos/modelo_gastos_recurrentes.pkl")
+except FileNotFoundError:
+    modelo = None
 
 app = FastAPI(title="API de Gastos Recurrentes y Resumen")
 
@@ -19,27 +25,56 @@ transacciones_df.rename(columns={"id": "id_cliente"}, inplace=True)
 class ClienteIDInput(BaseModel):
     id_cliente: str
 
-# === Simulación de modelo predictivo ===
+# === Función predictiva híbrida ===
 def modelo_predictivo(cliente_id: str) -> dict:
     transacciones = transacciones_df[transacciones_df["id_cliente"] == cliente_id]
 
     if transacciones.empty:
         return {"mensaje": "No se encontraron transacciones para este cliente"}
 
-    transacciones = transacciones.sort_values("fecha")
+    cliente_info = clientes_df[clientes_df["id_cliente"] == cliente_id]
+    if cliente_info.empty:
+        return {"mensaje": "No se encontró información del cliente"}
 
+    transacciones = transacciones.sort_values("fecha")
     ultima = transacciones.iloc[-1]
+
+    # Feature engineering
+    edad = int((ultima["fecha"] - cliente_info.iloc[0]["fecha_nacimiento"]).days / 365)
+    antiguedad = (ultima["fecha"] - cliente_info.iloc[0]["fecha_alta"]).days
+    dias_desde_ultimo = (ultima["fecha"] - transacciones.iloc[-2]["fecha"]).days if len(transacciones) > 1 else 30
     promedio_monto = transacciones["monto"].mean()
-    dias = np.random.randint(5, 30)
-    proxima_fecha = ultima["fecha"] + timedelta(days=dias)
+
+    if modelo:
+        # Crear input para el modelo
+        features = pd.DataFrame([{
+            "mes": ultima["fecha"].month,
+            "dia_semana": ultima["fecha"].weekday(),
+            "edad": edad,
+            "antiguedad": antiguedad,
+            "dias_desde_ultimo": dias_desde_ultimo,
+            "giro_comercio": ultima["giro_comercio"],
+            "tipo_venta": ultima["tipo_venta"],
+            "genero": cliente_info.iloc[0]["genero"],
+            "actividad_empresarial": cliente_info.iloc[0]["actividad_empresarial"],
+            "tipo_persona": cliente_info.iloc[0]["tipo_persona"]
+        }])
+
+        # Hacer predicción
+        dias_estimado = int(modelo["dias_model"].predict(features)[0])
+        monto_estimado = round(float(modelo["monto_model"].predict(features)[0]), 2)
+    else:
+        # Simulación si no hay modelo
+        dias_estimado = np.random.randint(5, 30)
+        monto_estimado = round(np.random.normal(promedio_monto, promedio_monto * 0.2), 2)
 
     return {
         "cliente_id": cliente_id,
         "ultima_fecha": ultima["fecha"].date(),
         "concepto_estimado": ultima["giro_comercio"],
         "comercio_estimado": ultima["comercio"],
-        "fecha_estimado": proxima_fecha.date(),
-        "monto_estimado": round(np.random.normal(promedio_monto, promedio_monto * 0.2), 2)
+        "fecha_estimado": (ultima["fecha"] + timedelta(days=dias_estimado)).date(),
+        "monto_estimado": monto_estimado
     }
 
 # === Endpoint 1: Predicción de gasto recurrente ===
