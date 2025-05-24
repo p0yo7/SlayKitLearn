@@ -1,3 +1,4 @@
+# Run with uvicorn app:app --reload
 from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from typing import Optional
