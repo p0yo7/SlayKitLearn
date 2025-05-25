@@ -176,7 +176,7 @@ def wrapped(
 
     try:
         respuesta_ai = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "Eres un redactor creativo para una fintech joven."},
                 {"role": "user", "content": prompt}
