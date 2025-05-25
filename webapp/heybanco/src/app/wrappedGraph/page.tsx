@@ -1,4 +1,4 @@
-import WrappedChart from '@/components/wrappedComponent'
+import WrappedChart from '@/components/wrappedComponentGraphic'
 
 export default function Page() {
   return (
